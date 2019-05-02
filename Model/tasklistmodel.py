@@ -46,21 +46,6 @@ class TaskListModel:
         self.dbconnectiontype.modify_subtask(primary_k, subtask_primary, description, completed, selected)
         self.tasks[primary_k].subtasks.modify_subtask(subtask_primary, description, completed, selected)
 
-    def print_shelve_db(self):
-        # for testing only
-        if isinstance(self.dbconnectiontype, DBConnectionShelve):
-            result = ""
-            for task in self.db.keys():
-                result += task
-                result += ": ["
-                for subtask in self.db[task].keys():
-                    if subtask not in self.dbconnectiontype.ignored_fields:
-                        result += "%s[%s - %s], " % (subtask, self.db[task][subtask]["completed"], self.db[task][subtask]["sequence"])
-                result += "]\n"
-            print(result)
-        else:
-            raise TypeError("Database connection type is not shelve")
-
 
 if __name__ == "__main__":
     model = TaskListModel(DBConnectionShelve(), "../data/db")
