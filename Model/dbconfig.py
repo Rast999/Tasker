@@ -66,26 +66,71 @@ class DBConnectionShelve:
             data[description] = subtask
             self.db[task.description] = data
 
-    def remove_task_from_db(self, task):
+    def remove_task_from_db(self, primary_k):
         if self.db is not None:
             try:
-                del self.db[task]
+                seq = self.db[primary_k]["sequence"]
+                del self.db[primary_k]
+                # adjust the sequence adter task deletion
+                for task, subtasks in self.db.items():
+                    if subtasks["sequence"] > seq:
+                        data = self.db[task]
+                        data["sequence"] -= 1
+                        self.db[task] = data
             except KeyError:
                 pass
 
-    def remove_subtask_from_db(self, task, subtask):
+    def remove_subtask_from_db(self, primary_k, subtask_primary):
         if self.db is not None:
-            data = self.db[task]
-            del data[subtask]
-            self.db[task] = data
+            data = self.db[primary_k]
+            seq = data[subtask_primary]["sequence"]
+            del data[subtask_primary]
+            # adjust the sequence numbers
+            for desc, subtask in data.items():
+                if desc not in self.ignored_fields and\
+                   subtask["sequence"] > seq:
+                    subtask["sequence"] -= 1
+            self.db[primary_k] = data
 
-    def modify_task(self, task: object):
-        # TODO
-        pass
+    def modify_task(self, primary_key: str, description: str = None,
+                    completed: bool = None, selected: bool = None):
+        if self.db is not None:
+            if description is not None:
+                if description in self.db:
+                    return
+                data = self.db[primary_key]
+                del self.db[primary_key]
+                self.db[description] = data
+                primary_key = description
+            if completed is not None:
+                data = self.db[primary_key]
+                data["completed"] = completed
+                self.db[primary_key] = data
+            if selected is not None:
+                data = self.db[primary_key]
+                data["selected"] = selected
+                self.db[primary_key] = data
 
-    def modify_subtask(self, subtask: object):
-        # TODO
-        pass
+    def modify_subtask(self, primary_k: str, subtask_primary: str,
+                       description: str = None, completed: bool = None, selected: bool = None):
+            if description is not None:
+                if description in self.db[primary_k]:
+                    return
+                data_task = self.db[primary_k]
+                data_subtask = data_task[subtask_primary]
+                del data_task[subtask_primary]
+                data_subtask["description"] = description
+                data_task[description] = data_subtask
+                self.db[primary_k] = data_task
+                subtask_primary = description
+            if completed is not None:
+                data_task = self.db[primary_k]
+                data_task[subtask_primary]["completed"] = completed
+                self.db[primary_k] = data_task
+            if selected is not None:
+                data_task = self.db[primary_k]
+                data_task[subtask_primary]["selected"] = selected
+                self.db[primary_k] = data_task
 
 
 if __name__ == '__main__':

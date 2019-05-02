@@ -1,6 +1,5 @@
-from dbconfig import DBConnectionShelve
-from subtask import Subtask
-from task import Task, TaskList
+from Model.dbconfig import DBConnectionShelve
+from Model.task import Task, TaskList
 
 
 class TaskListModel:
@@ -22,7 +21,7 @@ class TaskListModel:
         seq = len(self.tasks.items.keys()) + 1
         self.dbconnectiontype.add_task_to_db(description, seq)
         # self.tasks[description] = Task(description)
-        self.tasks.add_task(description)
+        self.tasks.add_task(description, sequence=seq)
 
     def add_subtask_to_db(self, task: object, description: str) -> None:
         seq = len(self.tasks[task.description].subtasks.items.keys())+1
@@ -31,19 +30,21 @@ class TaskListModel:
 
     def remove_task_from_db(self, primary_key) -> None:
         self.dbconnectiontype.remove_task_from_db(primary_key)
-        # TODO remove task from self.tasks
+        self.tasks.remove_task(primary_key)
 
     def remove_subtask_from_db(self, task_primary, subtask_primary):
         self.dbconnectiontype.remove_subtask_from_db(task_primary, subtask_primary)
-        # TODO remove task from subtasks
+        self.tasks[task_primary].subtasks.remove_subtask(subtask_primary)
 
-    def modify_task_in_db(self, task: object):
-        self.dbconnectiontype.modify_task(task)
-        # TODO modify task in tasks
+    def modify_task_in_db(self, primary_key: str, description: str = None,
+                          completed: bool = None, selected: bool = None) -> None:
+        self.dbconnectiontype.modify_task(primary_key, description, completed, selected)
+        self.tasks.modify_task(primary_key, description, completed, selected)
 
-    def modify_subtask_in_db(self, subtask: object):
-        self.dbconnectiontype.modify_subtask(subtask)
-        # TODO modify subtask in subtasks
+    def modify_subtask_in_db(self, primary_k: str, subtask_primary: str,
+                             description: str = None, completed: bool = None, selected: bool = None):
+        self.dbconnectiontype.modify_subtask(primary_k, subtask_primary, description, completed, selected)
+        self.tasks[primary_k].subtasks.modify_subtask(subtask_primary, description, completed, selected)
 
     def print_shelve_db(self):
         # for testing only
@@ -69,8 +70,10 @@ if __name__ == "__main__":
     model.add_subtask_to_db(model.tasks["test task 1"], "some subtask")
     model.add_subtask_to_db(model.tasks["test task 1"], "some subtask 32")
     model.add_subtask_to_db(model.tasks["Unnecessary task"], "some subtask")
-    model.remove_subtask_from_db("test task 1", "some subtask")
-    model.remove_task_from_db("test task 2")
-    model.remove_task_from_db("Unnecessary task")
+    # model.remove_subtask_from_db("test task 1", "some subtask")
+    # model.remove_task_from_db("test task 23")
+    # model.remove_task_from_db("Unnecessary task")
+    model.modify_task_in_db("test task 1", "test task 23", True)
+    # model.modify_subtask_in_db("test task 1", "some subtask", "some subtask updated", True)
     model.print_shelve_db()
     print("finish")
