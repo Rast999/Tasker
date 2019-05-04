@@ -42,6 +42,8 @@ class DBConnectionShelve:
                 if subtask not in self.ignored_fields:
                     item = self.db[task][subtask]
                     result[task].subtasks.add_subtask(subtask, result[task], item["completed"], item["date_created"], item["sequence"])
+            result[task].subtasks.sort_items()
+        result.sort_items()
         return result
 
     def close_db(self):
