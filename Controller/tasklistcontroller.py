@@ -24,11 +24,29 @@ class TaskListController:
     def create_new_subtask(self, description):
         self.model.add_subtask_to_db(self.model.tasks.active_task, description)
 
-    def modify_task(self, **kwargs):
-        pass
+    def modify_task(self, primary_k, **kwargs):
+        self.model.modify_task_in_db(primary_k, **kwargs)
 
-    def modify_subtask(self, **kwargs):
-        pass
+    def modify_subtask(self, primary_k, subtask_primary, **kwargs):
+        self.model.modify_subtask_in_db(primary_k, subtask_primary, **kwargs)
+
+    def toggle_completed(self, item_type:str):
+        if item_type == "subtask" or item_type == "both":
+            self.modify_subtask(self.model.tasks.active_task.description,
+                                self.model.tasks.active_task.subtasks.active_subtask.description,
+                                completed=not self.model.tasks.active_task.subtasks.active_subtask.completed)
+        elif item_type == "task" or item_type == "both":
+            self.modify_task(self.model.tasks.active_task.description,
+                             completed=self.is_task_completed(self.model.tasks.active_task))
+
+    @staticmethod
+    def is_task_completed(task):
+        if len(task.subtasks.items) == 0:
+            return False
+        for subtask in task.subtasks.items.values():
+            if not subtask.completed:
+                return False
+        return True
 
     def remove_task(self):
         seq = self.model.tasks.active_task.sequence
@@ -111,3 +129,6 @@ class TaskListController:
 
     def get_selected_subtask(self):
         return self.model.tasks.active_task.subtasks.active_subtask
+
+    def get_selected_task(self):
+        return self.model.tasks.active_task

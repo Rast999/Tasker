@@ -109,6 +109,7 @@ class DBConnectionShelve:
                 data["completed"] = completed
                 self.db[primary_key] = data
             if selected is not None:
+                print(primary_key)
                 data = self.db[primary_key]
                 data["selected"] = selected
                 self.db[primary_key] = data

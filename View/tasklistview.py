@@ -3,7 +3,7 @@
     This one particularly will use curses, but can be rewritten to use something else (ex. Tkinter)
 """
 import curses
-import os, sys
+import os, sys, locale
 
 sys.path.append(os.path.abspath(".."))
 
@@ -29,6 +29,8 @@ class TaskListView:
         def main(stdscr):
             # Set the terminal full screen
             curses.curs_set(0)
+            curses.init_pair(10, curses.COLOR_GREEN, 0)
+            curses.init_pair(11, 0, curses.COLOR_RED)
             curses.resize_term(100, 300)
             win = curses.newwin(3, curses.COLS - 2, 0, 0)
             self.tasks_window = TasksWindow("Tasks", curses.newwin(curses.LINES - 7, 100, 3, 0), self, self.controller)

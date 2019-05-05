@@ -37,11 +37,12 @@ class TaskList:
             if obj.sequence > seq:
                 obj.sequence -= 1
 
-    def modify_task(self, primary_k: str, description: str, completed: str, selected: bool):
+    def modify_task(self, primary_k: str, description: str, completed: bool, selected: bool):
         if description is not None:
             if description in self.items:
                 return
             data = self.items[primary_k]
+            data.description = description
             del self.items[primary_k]
             self.items[description] = data
             primary_k = description

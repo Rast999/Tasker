@@ -2,8 +2,9 @@
     Representing a particular window on scren
 """
 from View.Observer import Observer, Observable
-from curses import echo, noecho, curs_set
-
+from curses import echo, noecho, curs_set, A_REVERSE, A_UNDERLINE, color_pair
+from curses.textpad import Textbox
+import curses
 
 class TaskListWindow(Observer, Observable):
 
@@ -43,10 +44,13 @@ class TaskListWindow(Observer, Observable):
         if items:
             for idx, item in enumerate(items):
                 style = 0
+                completed = "v" if item.completed else "x"
                 if item.is_selected:
-                    style = 2097152
-                text = "%s. %s" % (item.sequence, item.description)
-                self.window.addstr(idx+1, 1, "{text: <{width}}".format(text=text, width=self.window.getmaxyx()[1]-2) , style)
+                    style = A_REVERSE
+                if item.completed:
+                    style = style | color_pair(10)
+                text = "%s %s. %s" % (completed, item.sequence, item.description)
+                self.window.addstr(idx+1, 1, "{text: <{width}}".format(text=text, width=self.window.getmaxyx()[1]-2), style)
 
     def execute_command(self, key):
         try:
@@ -64,6 +68,7 @@ class TasksWindow(TaskListWindow):
             259: ("Up", "Arrow up", self.go_up),    # up arrow key
             258: ("Down", "Arrow down", self.go_down),          # down arrow key
             267: ("F3", "Add new", self.add_task),
+            266: ("F2", "Modify", self.modify_task),
             330: ("Delete", "Delete task", self.remove_task),
             9: ("Tab", "Edit subtasks", self.focus_next_window)
         }
@@ -89,6 +94,21 @@ class TasksWindow(TaskListWindow):
             noecho()
             self.render(self.controller.get_tasks())
 
+    def modify_task(self):
+        current_task = self.controller.get_selected_task().sequence
+        curs_set(2)
+        try:
+            edit_win = self.window.subwin(1, self.window.getmaxyx()[1] - 1, current_task+3, 1)
+            edit_win.clear()
+            edit_win.addstr(0, 0, self.controller.get_selected_task().description)
+            edit_win.move(0, 0)
+            e = Textbox(edit_win, insert_mode=True)
+            text = e.edit()
+            self.controller.modify_task(self.controller.get_selected_task().description, description=text)
+        finally:
+            curs_set(0)
+            self.render(self.controller.get_tasks())
+
     def remove_task(self):
         val = self.controller.remove_task()
         self.render(self.controller.get_tasks())
@@ -104,7 +124,8 @@ class TasksWindow(TaskListWindow):
             self.view.subtasks_window.render(self.controller.get_subtasks())
 
     def update(self):
-        pass
+        self.controller.toggle_completed("task")
+        self.render(self.controller.get_tasks())
 
 
 class SubtasksWindow(TaskListWindow):
@@ -114,8 +135,9 @@ class SubtasksWindow(TaskListWindow):
         self.commands = {
             259: ("Up", "Arrow up", self.go_up),  # up arrow key
             258: ("Down", "Arrow down", self.go_down),  # down arrow key
-             330: ("Delete", "Delete task", self.remove_subtask),\
+            330: ("Delete", "Delete task", self.remove_subtask),\
             267: ("F3", "Add new", self.add_subtask),
+            275: ("F11", "Toggle completed", self.set_completed),
             9: ("Tab", "Edit Tasks", self.focus_next_window)
         }
 
@@ -133,6 +155,15 @@ class SubtasksWindow(TaskListWindow):
             curs_set(0)
             noecho()
             self.render(self.controller.get_subtasks())
+            self.notify()
+
+    def modify_subtask(self):
+        pass
+
+    def set_completed(self):
+        self.controller.toggle_completed("both")
+        self.render(self.controller.get_subtasks())
+        self.notify()
 
     def focus_next_window(self):
         super().focus_next_window()
