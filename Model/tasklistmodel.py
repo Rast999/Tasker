@@ -46,19 +46,46 @@ class TaskListModel:
         self.dbconnectiontype.modify_subtask(primary_k, subtask_primary, description, completed, selected)
         self.tasks[primary_k].subtasks.modify_subtask(subtask_primary, description, completed, selected)
 
+    def validate_task(self, task_description):
+        if len(task_description) == 0:
+            return False
+        if task_description in self.tasks.items:
+            return False
+        if task_description[-1] == 27:
+            return False
+        return True
+
+    def validate_subtask(self, subtask_description):
+        if len(subtask_description) == 0:
+            return False
+        if subtask_description in self.tasks.active_task.subtasks.items:
+            return False
+        if subtask_description[-1] == 27:
+            return False
+        return True
+
 
 if __name__ == "__main__":
     model = TaskListModel(DBConnectionShelve(), "../data/db")
     model.add_task_to_db("test task 1")
     model.add_task_to_db("test task 23")
     model.add_task_to_db("Unnecessary task")
+    model.add_task_to_db("Unnecessary task 2")
+    model.add_task_to_db("Unnecessary task 3")
+    model.add_task_to_db("Unnecessary task 4")
+    model.add_task_to_db("Unnecessary task 5")
     model.add_subtask_to_db(model.tasks["test task 1"], "some subtask")
     model.add_subtask_to_db(model.tasks["test task 1"], "some subtask 32")
     model.add_subtask_to_db(model.tasks["Unnecessary task"], "some subtask")
+    model.add_subtask_to_db(model.tasks["Unnecessary task 5"], "some subtask 1")
+    model.add_subtask_to_db(model.tasks["Unnecessary task 5"], "some subtask 2")
+    model.add_subtask_to_db(model.tasks["Unnecessary task 5"], "some subtask 3")
+    model.add_subtask_to_db(model.tasks["Unnecessary task 5"], "some subtask 4")
+    model.add_subtask_to_db(model.tasks["Unnecessary task 5"], "some subtask 1")
     # model.remove_subtask_from_db("test task 1", "some subtask")
     # model.remove_task_from_db("test task 23")
     # model.remove_task_from_db("Unnecessary task")
-    model.modify_task_in_db("test task 1", "test task 23", True)
+    # model.modify_task_in_db("test task 1", "test task 23", True)
     # model.modify_subtask_in_db("test task 1", "some subtask", "some subtask updated", True)
-    model.print_shelve_db()
+    # model.print_shelve_db()
     print("finish")

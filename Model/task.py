@@ -20,6 +20,9 @@ class TaskList:
     def add_task(self, description, completed=False, sequence=1):
         if description not in self.items:
             item = Task(description, completed, sequence=sequence)
+            if self.active_task is None:
+                self.active_task = item
+                item.is_selected = True
             self.items[description] = item
             self.items_sorted.append(item)
 
@@ -45,8 +48,7 @@ class TaskList:
         if completed is not None:
             self.items[primary_k].completed = completed
         if selected is not None:
-            # TODO
-            self.items[primary_k].selected = selected
+            self.items[primary_k].is_selected = selected
         seq = self.items[primary_k].sequence
         self.items_sorted[seq - 1] = self.items[primary_k]
 

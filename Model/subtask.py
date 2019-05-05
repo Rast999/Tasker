@@ -48,7 +48,7 @@ class SubTaskList:
         if completed is not None:
             self.items[subtask_primary].completed = completed
         if selected is not None:
-            self.items[subtask_primary].selected = selected
+            self.items[subtask_primary].is_selected = selected
         # modify the subtask in sorted_list too
         seq = self.items[subtask_primary].sequence
         self.items_sorted[seq - 1] = self.items[subtask_primary]

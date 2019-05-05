@@ -25,7 +25,7 @@ import datetime
 
 class DBConnectionShelve:
 
-    ignored_fields = ["completed", "sequence"]
+    ignored_fields = ["completed", "sequence", "selected"]
 
     def __init__(self):
         self.db = None

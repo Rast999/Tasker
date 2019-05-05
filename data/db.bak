@@ -1,2 +1,4 @@
-'test task 23', (512, 302)
-'Unnecessary task', (1024, 180)
+'To-Do list', (34304, 591)
+'To-Buy list', (31744, 211)
+'To-Change list', (32256, 58)
+'Wish-list', (32768, 333)
