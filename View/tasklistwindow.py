@@ -4,13 +4,14 @@
 from View.Observer import Observer, Observable
 from curses import echo, noecho, curs_set, A_REVERSE, A_UNDERLINE, color_pair
 from curses.textpad import Textbox
-import curses
+
 
 class TaskListWindow(Observer, Observable):
 
     def __init__(self, name, window, view, controller):
         Observable.__init__(self)
         self.name = name
+        self.active_item_name = ""
         self.window = window
         self.commands = dict()
         self.view = view
@@ -50,6 +51,8 @@ class TaskListWindow(Observer, Observable):
                 if item.completed:
                     style = style | color_pair(10)
                 text = "%s %s. %s" % (completed, item.sequence, item.description)
+                maxx = self.window.getmaxyx()[1]
+                text = (text[:maxx - 6] + "...") if len(text) > maxx - 3 else text
                 self.window.addstr(idx+1, 1, "{text: <{width}}".format(text=text, width=self.window.getmaxyx()[1]-2), style)
 
     def execute_command(self, key):
@@ -95,19 +98,26 @@ class TasksWindow(TaskListWindow):
             self.render(self.controller.get_tasks())
 
     def modify_task(self):
-        current_task = self.controller.get_selected_task().sequence
+        current_task = self.controller.get_selected_task()
         curs_set(2)
         try:
-            edit_win = self.window.subwin(1, self.window.getmaxyx()[1] - 1, current_task+3, 1)
+            from math import ceil
+            max_rows = ceil(len(current_task.description) / (self.window.getmaxyx()[1] - 2))
+
+            # Display hint
+            self.view.command_window.display_text("Ctrl+G - Save Result")
+
+            edit_win = self.window.subwin(max_rows, self.window.getmaxyx()[1] - 2, current_task.sequence+3, 1)
             edit_win.clear()
             edit_win.addstr(0, 0, self.controller.get_selected_task().description)
             edit_win.move(0, 0)
             e = Textbox(edit_win, insert_mode=True)
-            text = e.edit()
+            text = self.controller.sanitize_input(e.edit())
             self.controller.modify_task(self.controller.get_selected_task().description, description=text)
         finally:
             curs_set(0)
             self.render(self.controller.get_tasks())
+            self.notify()
 
     def remove_task(self):
         val = self.controller.remove_task()
@@ -137,7 +147,7 @@ class SubtasksWindow(TaskListWindow):
             258: ("Down", "Arrow down", self.go_down),  # down arrow key
             330: ("Delete", "Delete task", self.remove_subtask),\
             267: ("F3", "Add new", self.add_subtask),
-            275: ("F11", "Toggle completed", self.set_completed),
+            268: ("F4", "Toggle completed", self.set_completed),
             9: ("Tab", "Edit Tasks", self.focus_next_window)
         }
 
@@ -166,8 +176,8 @@ class SubtasksWindow(TaskListWindow):
         self.notify()
 
     def focus_next_window(self):
-        super().focus_next_window()
         self.controller.select_item("subtask")
+        super().focus_next_window()
         self.render(self.controller.get_subtasks())
 
     def go_up(self):
@@ -200,6 +210,12 @@ class CommandsWindow(TaskListWindow):
         for command in commands.values():
             text += "%s - %s | " % (command[0], command[1])
         self.view.print_center(1, text, self.window)
+
+    def display_text(self, text):
+        self.window.clear()
+        self.window.border()
+        self.view.print_center(1, text, self.window)
+        self.window.refresh()
 
     def update(self):
         self.render(self.view.active_window.commands)

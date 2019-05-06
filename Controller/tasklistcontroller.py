@@ -80,22 +80,26 @@ class TaskListController:
     def go_up(self, list_type: str):
         if list_type == "task":
             seq = self.model.tasks.active_task.sequence
-            if seq > 1:
-                self.select_item(list_type, seq-2)
+            if self.model.tasks.active_task:
+                if seq > 1:
+                    self.select_item(list_type, seq-2)
         elif list_type == "subtask":
-            seq = self.model.tasks.active_task.subtasks.active_subtask.sequence
-            if seq > 1:
-                self.select_item(list_type, seq-2)
+            if self.model.tasks.active_task.subtasks.active_subtask:
+                seq = self.model.tasks.active_task.subtasks.active_subtask.sequence
+                if seq > 1:
+                    self.select_item(list_type, seq-2)
 
     def go_down(self, list_type: str):
         if list_type == "task":
-            seq = self.model.tasks.active_task.sequence
-            if seq < len(self.model.tasks):
-                self.select_item(list_type, seq)
+            if self.model.tasks.active_task:
+                seq = self.model.tasks.active_task.sequence
+                if seq < len(self.model.tasks):
+                    self.select_item(list_type, seq)
         elif list_type == "subtask":
-            seq = self.model.tasks.active_task.subtasks.active_subtask.sequence
-            if seq < len(self.model.tasks.active_task.subtasks):
-                self.select_item(list_type, seq)
+            if self.model.tasks.active_task.subtasks.active_subtask:
+                seq = self.model.tasks.active_task.subtasks.active_subtask.sequence
+                if seq < len(self.model.tasks.active_task.subtasks):
+                    self.select_item(list_type, seq)
 
     def select_item(self, list_type: str, sequence: int=None):
         if list_type == "task":
@@ -105,8 +109,10 @@ class TaskListController:
                 new_item = self.model.tasks.items_sorted[sequence]
                 self.model.modify_task_in_db(new_item.description, selected=True)
                 self.model.tasks.active_task = self.model.tasks.items_sorted[sequence]
+                self.view.active_window.active_item_name = self.model.tasks.active_task.description
             else:
                 self.model.tasks.active_task = None
+                self.view.active_window.active_item_name = self.view.active_window.name
         elif list_type == "subtask":
             if self.model.tasks.active_task.subtasks.active_subtask:
                 self.model.modify_subtask_in_db(self.model.tasks.active_task.description,
@@ -118,8 +124,10 @@ class TaskListController:
                                                 new_item.description,
                                                 selected=True)
                 self.model.tasks.active_task.subtasks.active_subtask = self.model.tasks.active_task.subtasks.items_sorted[sequence]
+                self.view.active_window.active_item_name = self.model.tasks.active_task.subtasks.active_subtask.description
             else:
                 self.model.tasks.active_task.subtasks.active_subtask = None
+                self.view.active_window.active_item_name = ""
 
     def validate_task(self, description):
         return self.model.validate_task(description)
@@ -132,3 +140,7 @@ class TaskListController:
 
     def get_selected_task(self):
         return self.model.tasks.active_task
+
+    @staticmethod
+    def sanitize_input(inp: str):
+        return inp.strip().replace("\n", "")

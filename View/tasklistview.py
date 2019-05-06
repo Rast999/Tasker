@@ -12,6 +12,7 @@ from Model.dbconfig import DBConnectionShelve
 from Controller.tasklistcontroller import TaskListController
 from View.tasklistwindow import TasksWindow, SubtasksWindow, CommandsWindow
 
+locale.setlocale(locale.LC_ALL, '')
 
 class TaskListView:
 
@@ -31,12 +32,13 @@ class TaskListView:
             curses.curs_set(0)
             curses.init_pair(10, curses.COLOR_GREEN, 0)
             curses.init_pair(11, 0, curses.COLOR_RED)
-            curses.resize_term(100, 300)
+            # curses.resize_term(30, 160)
             win = curses.newwin(3, curses.COLS - 2, 0, 0)
-            self.tasks_window = TasksWindow("Tasks", curses.newwin(curses.LINES - 7, 100, 3, 0), self, self.controller)
+            tasks_width = int(stdscr.getmaxyx()[1] * 0.4)   # get task list width of 40%
+            self.tasks_window = TasksWindow("Tasks", curses.newwin(curses.LINES - 7, tasks_width, 3, 0), self, self.controller)
             self.active_window = self.tasks_window
             self.tasks_window.window.keypad(True)
-            self.subtasks_window = SubtasksWindow("Subtasks", curses.newwin(curses.LINES - 7, curses.COLS - 103, 3, 101), self, self.controller)
+            self.subtasks_window = SubtasksWindow("Subtasks", curses.newwin(curses.LINES - 7, curses.COLS-tasks_width-3, 3, tasks_width+1), self, self.controller)
             self.subtasks_window.window.keypad(True)
             self.command_window = CommandsWindow("Commands", curses.newwin(3, curses.COLS - 2, curses.LINES - 4, 0), self, self.controller)
             self.command_window.render(self.active_window.commands)
@@ -53,7 +55,7 @@ class TaskListView:
 
                 win.clear()
                 win.border()
-                self.print_center(1, "Tasker (%s)" % k, win)#self.active_window.name, win)
+                self.print_center(1, "Tasker (%s)" % self.active_window.active_item_name, win)
                 win.refresh()
                 self.tasks_window.window.refresh()
                 self.subtasks_window.window.refresh()
@@ -71,6 +73,7 @@ class TaskListView:
 
     @staticmethod
     def print_center(line, text, window):
+        text = (text[:curses.COLS-8] + "...") if len(text) > curses.COLS-5 else text
         window.addstr(line, curses.COLS//2-len(text)//2, text)
 
     def refresh_screen(self):
