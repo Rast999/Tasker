@@ -36,7 +36,7 @@ class TaskListView:
             win = curses.newwin(3, curses.COLS - 2, 0, 0)
             tasks_width = int(stdscr.getmaxyx()[1] * 0.4)   # get task list width of 40%
             self.tasks_window = TasksWindow("Tasks", curses.newwin(curses.LINES - 7, tasks_width, 3, 0), self, self.controller)
-            self.active_window = self.tasks_window
+            self.set_active_window(self.tasks_window)
             self.tasks_window.window.keypad(True)
             self.subtasks_window = SubtasksWindow("Subtasks", curses.newwin(curses.LINES - 7, curses.COLS-tasks_width-3, 3, tasks_width+1), self, self.controller)
             self.subtasks_window.window.keypad(True)
@@ -48,10 +48,7 @@ class TaskListView:
             self.subtasks_window.add(self.tasks_window, self.command_window)
             # get data from Model via controller
             self.refresh_screen()
-            k = ""
             while True:
-                if curses.is_term_resized(0, 0):
-                    return False
 
                 win.clear()
                 win.border()
@@ -82,6 +79,11 @@ class TaskListView:
 
     def set_controller(self, controller):
         self.controller = controller
+
+    def set_active_window(self, win):
+        self.active_window = win
+        if isinstance(win, TasksWindow):
+            self.active_window.active_item_name = self.controller.get_selected_task().description
 
     def focus_next_window(self):
         for idx, win in enumerate(self.focusable_windows):

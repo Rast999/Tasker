@@ -145,7 +145,8 @@ class SubtasksWindow(TaskListWindow):
         self.commands = {
             259: ("Up", "Arrow up", self.go_up),  # up arrow key
             258: ("Down", "Arrow down", self.go_down),  # down arrow key
-            330: ("Delete", "Delete task", self.remove_subtask),\
+            330: ("Delete", "Delete task", self.remove_subtask),
+            266: ("F2", "Modify", self.modify_subtask),
             267: ("F3", "Add new", self.add_subtask),
             268: ("F4", "Toggle completed", self.set_completed),
             9: ("Tab", "Edit Tasks", self.focus_next_window)
@@ -168,7 +169,29 @@ class SubtasksWindow(TaskListWindow):
             self.notify()
 
     def modify_subtask(self):
-        pass
+        current_subtask = self.controller.get_selected_subtask()
+        curs_set(2)
+        try:
+            from math import ceil
+            max_rows = ceil(len(current_subtask.description) / (self.window.getmaxyx()[1] - 2))
+
+            # Display hint
+            self.view.command_window.display_text("Ctrl+G - Save Result")
+
+            edit_win = self.window.subwin(max_rows, self.window.getmaxyx()[1] - 2,
+                                          current_subtask.sequence+3, self.view.tasks_window.window.getmaxyx()[1]+2)
+            edit_win.clear()
+            edit_win.addstr(0, 0, self.controller.get_selected_subtask().description)
+            edit_win.move(0, 0)
+            e = Textbox(edit_win, insert_mode=True)
+            text = self.controller.sanitize_input(e.edit())
+            self.controller.modify_subtask(self.controller.get_selected_task().description,
+                                           self.controller.get_selected_subtask().description,
+                                           description=text)
+        finally:
+            curs_set(0)
+            self.render(self.controller.get_subtasks())
+            self.notify()
 
     def set_completed(self):
         self.controller.toggle_completed("both")
